@@ -1,7 +1,8 @@
 # Specify the minimum version
 #   3.9  required for regex submatches
 #   3.12 required for policy CMP0074 (using *_ROOT variables)
-cmake_minimum_required ( VERSION 3.12 )
+#   3.13 required for policy CMP0076 (target_sources() command converts relative paths to absolute)
+cmake_minimum_required ( VERSION 3.13 )
 
 # Reconfigure if Project.toml has changed
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/LibTrixi.jl/Project.toml")
@@ -23,13 +24,23 @@ file(WRITE "${CMAKE_BINARY_DIR}/LIBTRIXI_VERSION" "${LIBTRIXI_VERSION}\n")
 project ( trixi VERSION ${LIBTRIXI_VERSION_MAJOR}.${LIBTRIXI_VERSION_MINOR}.${LIBTRIXI_VERSION_PATCH}
           DESCRIPTION "Interface library for using Trixi.jl from C/C++/Fortran" )
 
-# Enable C and Fortran
-enable_language(C Fortran)
+# Additional configuration options
+option( LIBTRIXI_BUILD_FORTRAN_API "Enable the build of the Fortran interface" ON )
+option( LIBTRIXI_WITH_T8CODE "Link against an available t8code installation" OFF )
+option( LIBTRIXI_ENABLE_ALL_WARNINGS "Use compilation flags -Wall -Wextra -Wpedantic" [OFF] )
+option( LIBTRIXI_ENABLE_WERROR "Use compilation flag -Werror" [OFF] )
+option( LIBTRIXI_ENABLE_TESTING "Build tests using Google Test (C) and test-drive (Fortran)" [OFF] )
+
+# Enable C by default and Fortran
+enable_language( C )
+
+# Optionally enable Fortran
+if( LIBTRIXI_BUILD_FORTRAN_API )
+    enable_language( Fortran )
+endif()
 
 # Enabling setting rpath for installation
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-
 
 # Additional cmake modules
 list ( APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/" )
@@ -38,17 +49,22 @@ list ( APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/" )
 find_package( Julia REQUIRED )
 
 # Find t8code
-find_package( T8CODE CONFIG )
-if ( NOT T8CODE_FOUND )
-    message( NOTICE "t8code not found: t8code examples will NOT be built")
+if( LIBTRIXI_WITH_T8CODE )
+    find_package( T8CODE CONFIG )
+    if ( NOT T8CODE_FOUND )
+        message( NOTICE "t8code not found: t8code examples will NOT be built" )
+    else()
+        message(STATUS "Found t8code installation: ${T8CODE_DIR}" )
+    endif()
+else()
+    set(T8CODE_FOUND OFF)
 endif()
 
 # Find MPI
 find_package( MPI REQUIRED )
 
 # Find Google Test and test-drive on demand
-option( ENABLE_TESTING "Build tests using Google Test (C) and test-drive (Fortran)" )
-if( ENABLE_TESTING )
+if( LIBTRIXI_ENABLE_TESTING )
     if ( NOT DEFINED JULIA_PROJECT_PATH )
         message( FATAL_ERROR "JULIA_PROJECT_PATH not set, tests will not work.")
     endif()
@@ -57,22 +73,26 @@ if( ENABLE_TESTING )
 
     find_package( GTest REQUIRED )
 
-    set ( TEST_DRIVE_FIND_METHOD fetch )
-    # Option TEST_DRIVE_BUILD_TESTING is hard-coded to ON, could be spared
-    find_package( test-drive REQUIRED )
+    if( LIBTRIXI_BUILD_FORTRAN_API )
+        set ( TEST_DRIVE_FIND_METHOD fetch )
+        # Option TEST_DRIVE_BUILD_TESTING is hard-coded to ON, could be spared
+        find_package( test-drive REQUIRED )
+    endif()
 endif()
 
 # Optionally use PackageCompiler.jl to build standalone libtrixi.so
 option( USE_PACKAGE_COMPILER "Build standalone libtrixi.so using PackageCompiler.jl" )
 
-# Fortran mod file location
-set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR})
+if( LIBTRIXI_BUILD_FORTRAN_API )
+    # Fortran mod file location
+    set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()
 
 if( USE_PACKAGE_COMPILER )
     if ( NOT DEFINED JULIA_PROJECT_PATH )
         message( FATAL_ERROR "JULIA_PROJECT_PATH needs to be set for PackageCompiler.jl.")
     endif()
-    if ( ENABLE_TESTING )
+    if ( LIBTRIXI_ENABLE_TESTING )
         message( NOTICE "Testing is not supported when PackageCompiler is used.")
     endif()
 
@@ -89,10 +109,12 @@ if( USE_PACKAGE_COMPILER )
                         COMMAND ${CMAKE_COMMAND} -E copy ${PC_INIT_SOURCE} ${PC_INIT_BUILD}
                         DEPENDS ${PC_INIT_SOURCE} )
 
-    # Add a library target (libtrixi), only for Fortran module
-    add_library( ${PROJECT_NAME} OBJECT
-        src/api.f90
-    )
+    if( LIBTRIXI_BUILD_FORTRAN_API )
+        # Add a library target (libtrixi), only for Fortran module
+        add_library( ${PROJECT_NAME} OBJECT
+            src/api.f90
+        )
+    endif()
 
     # Custom command to run PackageCompiler.jl to produce libtrixi.so
     add_custom_command( OUTPUT ${PC_LIBTRIXI_SO}
@@ -123,11 +145,17 @@ else()
     # Library target
     add_library ( ${PROJECT_NAME} SHARED
         src/api.c
-        src/api.f90
         src/auxiliary.h
         src/auxiliary.c
         src/trixi.h
     )
+
+    # Build Fortran library target on demand
+    if( LIBTRIXI_BUILD_FORTRAN_API )
+        target_sources (${PROJECT_NAME} PRIVATE
+            src/api.f90
+        )
+    endif()
 
     # Include directories, private
     target_include_directories ( ${PROJECT_NAME} PRIVATE src )
@@ -148,13 +176,21 @@ else()
 
     # Set appropriate compile flags
     target_compile_options( ${PROJECT_NAME} PUBLIC "-fPIC" )
-    target_compile_options( ${PROJECT_NAME} PRIVATE -Wall -Wextra -Werror)
+
+    # Potentially, enable all warnings
+    if( LIBTRIXI_ENABLE_ALL_WARNINGS )
+        target_compile_options( ${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+
+    # Potentially, enable to interpret warnings as errors
+    if( LIBTRIXI_ENABLE_WERROR )
+        target_compile_options( ${PROJECT_NAME} PRIVATE -Werror)
+    endif()
+
     # Require C11 standard with GNU extensions for C files
     target_compile_options( ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANGUAGE:C>:-std=gnu11>)
     # Require Fortran 2018 standard for Fortran files
     target_compile_options( ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-std=f2018>)
-
-
 
     # Add auxiliary *object* library to support fast thread-local storage (TLS)
     add_library ( ${PROJECT_NAME}_tls OBJECT
@@ -163,10 +199,13 @@ else()
     target_include_directories( ${PROJECT_NAME}_tls PRIVATE ${JULIA_INCLUDE_DIRS} )
 
     # Add test on demand
-    if( ENABLE_TESTING )
+    if( LIBTRIXI_ENABLE_TESTING )
         enable_testing()
         add_subdirectory( test/c )
-        add_subdirectory( test/fortran )
+
+        if( LIBTRIXI_BUILD_FORTRAN_API )
+            add_subdirectory( test/fortran )
+        endif()
     endif()
 
 
@@ -175,15 +214,15 @@ else()
     install( FILES "${CMAKE_BINARY_DIR}/LIBTRIXI_VERSION" DESTINATION share/julia )
 endif()
 
-
-
 # Public header for libtrixi
 set_target_properties ( ${PROJECT_NAME} PROPERTIES PUBLIC_HEADER src/trixi.h )
 
 # Common install configuration
 install( TARGETS ${PROJECT_NAME} )
 install( DIRECTORY LibTrixi.jl DESTINATION share/libtrixi PATTERN "lib" EXCLUDE )
-install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/libtrixi.mod TYPE INCLUDE)
+if( LIBTRIXI_BUILD_FORTRAN_API )
+    install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/libtrixi.mod TYPE INCLUDE)
+endif()
 install( PROGRAMS utils/libtrixi-init-julia TYPE BIN )
 
 # Add examples

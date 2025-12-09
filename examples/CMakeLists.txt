@@ -17,6 +17,11 @@ if ( NOT T8CODE_FOUND )
     list( FILTER EXAMPLES EXCLUDE REGEX "trixi_controller_baroclinic.*" )
 endif()
 
+if (NOT LIBTRIXI_BUILD_FORTRAN_API)
+    # Remove Fortran files if the the Fortran API is not build
+    list( FILTER EXAMPLES EXCLUDE REGEX ".*\.f90" )
+endif()
+
 foreach ( EXAMPLE ${EXAMPLES} )
 
     get_filename_component ( EXAMPLE_EXT ${EXAMPLE} EXT )
@@ -45,7 +50,7 @@ foreach ( EXAMPLE ${EXAMPLES} )
         target_link_libraries( ${TARGET_NAME} PRIVATE ${PROJECT_NAME}_tls )
     endif()
     if ( T8CODE_FOUND )
-        target_link_libraries( ${TARGET_NAME} PRIVATE T8CODE::T8 )
+        target_link_libraries( ${TARGET_NAME} PUBLIC T8CODE::T8 )
     endif()
 
     # set include directories
@@ -53,8 +58,10 @@ foreach ( EXAMPLE ${EXAMPLES} )
         ${TARGET_NAME}
         PRIVATE ${CMAKE_SOURCE_DIR}/src
     )
-    if ( T8CODE_FOUND )
-        target_include_directories( ${TARGET_NAME} PRIVATE ${T8CODE_ROOT}/include/t8_fortran_interface/ )
+
+    if ( LIBTRIXI_BUILD_FORTRAN_API AND T8CODE_FOUND )
+        # Add the t8code include directory of the Fortran module file for the Fortran compiler to find the module files 
+        target_include_directories( ${TARGET_NAME} PUBLIC ${T8CODE_DIR}/../include/t8_fortran_interface/ )
     endif()
 
     # set runtime path for installed binaries
@@ -66,8 +73,14 @@ foreach ( EXAMPLE ${EXAMPLES} )
     # position independent code
     target_compile_options( ${TARGET_NAME} PRIVATE "-fPIC" )
 
-    # enable warnings
-    target_compile_options( ${TARGET_NAME} PRIVATE -Wall -Wextra -Werror )
+    # Potentially, enable all warnings
+    if( LIBTRIXI_ENABLE_ALL_WARNINGS )
+        target_compile_options( ${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    # Potentially, enable to interpret warnings as errors
+    if( LIBTRIXI_ENABLE_WERROR )
+        target_compile_options( ${TARGET_NAME} PRIVATE -Werror)
+    endif()
 
     # add to installation
     install( TARGETS ${TARGET_NAME} )
