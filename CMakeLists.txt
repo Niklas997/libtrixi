@@ -27,11 +27,11 @@ project ( trixi VERSION ${LIBTRIXI_VERSION_MAJOR}.${LIBTRIXI_VERSION_MINOR}.${LI
 # Additional configuration options
 option( LIBTRIXI_BUILD_FORTRAN_API "Enable the build of the Fortran interface" ON )
 option( LIBTRIXI_WITH_T8CODE "Link against an available t8code installation" OFF )
-option( LIBTRIXI_ENABLE_ALL_WARNINGS "Use compilation flags -Wall -Wextra -Wpedantic" OFF )
+option( LIBTRIXI_ENABLE_WARNINGS "Use compilation flags -Wall -Wextra" OFF )
 option( LIBTRIXI_ENABLE_WERROR "Use compilation flag -Werror" OFF )
 option( LIBTRIXI_ENABLE_TESTING "Build tests using Google Test (C) and test-drive (Fortran)" OFF )
 
-# Enable C by default and Fortran
+# Enable C always
 enable_language( C )
 
 # Optionally enable Fortran
@@ -175,9 +175,9 @@ else()
     # Set appropriate compile flags
     target_compile_options( ${PROJECT_NAME} PUBLIC "-fPIC" )
 
-    # Potentially, enable all warnings
-    if( LIBTRIXI_ENABLE_ALL_WARNINGS )
-        target_compile_options( ${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+    # Potentially, enable warnings
+    if( LIBTRIXI_ENABLE_WARNINGS )
+        target_compile_options( ${PROJECT_NAME} PRIVATE -Wall -Wextra)
     endif()
 
     # Potentially, enable to interpret warnings as errors
