@@ -27,9 +27,9 @@ project ( trixi VERSION ${LIBTRIXI_VERSION_MAJOR}.${LIBTRIXI_VERSION_MINOR}.${LI
 # Additional configuration options
 option( LIBTRIXI_BUILD_FORTRAN_API "Enable the build of the Fortran interface" ON )
 option( LIBTRIXI_WITH_T8CODE "Link against an available t8code installation" OFF )
-option( LIBTRIXI_ENABLE_ALL_WARNINGS "Use compilation flags -Wall -Wextra -Wpedantic" [OFF] )
-option( LIBTRIXI_ENABLE_WERROR "Use compilation flag -Werror" [OFF] )
-option( LIBTRIXI_ENABLE_TESTING "Build tests using Google Test (C) and test-drive (Fortran)" [OFF] )
+option( LIBTRIXI_ENABLE_ALL_WARNINGS "Use compilation flags -Wall -Wextra -Wpedantic" OFF )
+option( LIBTRIXI_ENABLE_WERROR "Use compilation flag -Werror" OFF )
+option( LIBTRIXI_ENABLE_TESTING "Build tests using Google Test (C) and test-drive (Fortran)" OFF )
 
 # Enable C by default and Fortran
 enable_language( C )
@@ -166,8 +166,6 @@ else()
     # Version info for the shared object
     set_target_properties ( ${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} )
 
-
-
     # Include directories
     target_include_directories( ${PROJECT_NAME} PRIVATE src ${JULIA_INCLUDE_DIRS} )
 
@@ -207,7 +205,6 @@ else()
             add_subdirectory( test/fortran )
         endif()
     endif()
-
 
     # Install configuration
     install( FILES $<TARGET_OBJECTS:${PROJECT_NAME}_tls> TYPE LIB RENAME lib${PROJECT_NAME}_tls.o )
