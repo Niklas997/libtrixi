@@ -75,11 +75,11 @@ foreach ( EXAMPLE ${EXAMPLES} )
 
     # Potentially, enable all warnings
     if( LIBTRIXI_ENABLE_ALL_WARNINGS )
-        target_compile_options( ${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options( ${TARGET_NAME} PRIVATE ${LIBTRIXI_WARNING_OPTIONS})
     endif()
     # Potentially, enable to interpret warnings as errors
     if( LIBTRIXI_ENABLE_WERROR )
-        target_compile_options( ${TARGET_NAME} PRIVATE -Werror)
+        target_compile_options( ${TARGET_NAME} PRIVATE ${LIBTRIXI_WERROR_OPTION})
     endif()
 
     # add to installation

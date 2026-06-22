@@ -31,6 +31,10 @@ option( LIBTRIXI_ENABLE_WARNINGS "Use compilation flags -Wall -Wextra" OFF )
 option( LIBTRIXI_ENABLE_WERROR "Use compilation flag -Werror" OFF )
 option( LIBTRIXI_ENABLE_TESTING "Build tests using Google Test (C) and test-drive (Fortran)" OFF )
 
+# Define the warnings to use if enabled 
+set (LIBTRIXI_WARNING_OPTIONS -Wall -Wextra)
+set (LIBTRIXI_WERROR_OPTION -Werror)
+
 # Enable C always
 enable_language( C )
 
@@ -177,12 +181,12 @@ else()
 
     # Potentially, enable warnings
     if( LIBTRIXI_ENABLE_WARNINGS )
-        target_compile_options( ${PROJECT_NAME} PRIVATE -Wall -Wextra)
+        target_compile_options( ${PROJECT_NAME} PRIVATE ${LIBTRIXI_WARNING_OPTIONS})
     endif()
 
     # Potentially, enable to interpret warnings as errors
     if( LIBTRIXI_ENABLE_WERROR )
-        target_compile_options( ${PROJECT_NAME} PRIVATE -Werror)
+        target_compile_options( ${PROJECT_NAME} PRIVATE ${LIBTRIXI_WERROR_OPTION})
     endif()
 
     # Require C11 standard with GNU extensions for C files
