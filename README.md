@@ -59,7 +59,7 @@ For building, `cmake` and its typical workflow is used.
     - By default the Fortran-Interface is built; it may be excluded with `DLIBTRIXI_BUILD_FORTRAN_API=OFF`.
     - Optional compiler options `-Wall -Wextra` are specified with `-DLIBTRIXI_ENABLE_WARNINGS=ON`.
     - Optional compiler option `-Werror` is specified with `-DLIBTRIXI_ENABLE_WERROR=ON`.
-    - Building of the test is enabled with `LIBTRIXI_ENABLE_TESTING=ON`.
+    - Building of the test is enabled with `-DLIBTRIXI_ENABLE_TESTING=ON`.
     - Building with t8code support is optional. It requires to pass `-DLIBTRIXI_WITH_T8CODE=ON` and
       `-DT8CODE_ROOT=<t8code_install_directory>`.
 
