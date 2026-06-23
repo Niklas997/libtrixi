@@ -60,7 +60,7 @@ For building, `cmake` and its typical workflow is used.
     - Optional compiler options `-Wall -Wextra` are specified with `-DLIBTRIXI_ENABLE_WARNINGS=ON`.
     - Optional compiler option `-Werror` is specified with `-DLIBTRIXI_ENABLE_WERROR=ON`.
     - Building of the test is enabled with `-DLIBTRIXI_ENABLE_TESTING=ON`.
-    - Building with t8code support is optional. It requires to pass `-DLIBTRIXI_WITH_T8CODE=ON` and
+    - Building with t8code support is optional. It requires to pass
       `-DT8CODE_ROOT=<t8code_install_directory>`.
 
 3. Call make

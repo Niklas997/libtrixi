@@ -26,7 +26,6 @@ project ( trixi VERSION ${LIBTRIXI_VERSION_MAJOR}.${LIBTRIXI_VERSION_MINOR}.${LI
 
 # Additional configuration options
 option( LIBTRIXI_BUILD_FORTRAN_API "Enable the build of the Fortran interface" ON )
-option( LIBTRIXI_WITH_T8CODE "Link against an available t8code installation" OFF )
 option( LIBTRIXI_ENABLE_WARNINGS "Use compilation flags -Wall -Wextra" OFF )
 option( LIBTRIXI_ENABLE_WERROR "Use compilation flag -Werror" OFF )
 option( LIBTRIXI_ENABLE_TESTING "Build tests using Google Test (C) and test-drive (Fortran)" OFF )
@@ -53,15 +52,9 @@ list ( APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/" )
 find_package( Julia REQUIRED )
 
 # Find t8code
-if( LIBTRIXI_WITH_T8CODE )
-    find_package( T8CODE CONFIG )
-    if ( NOT T8CODE_FOUND )
-        message( NOTICE "t8code not found: t8code examples will NOT be built" )
-    else()
-        message(STATUS "Found t8code installation: ${T8CODE_DIR}" )
-    endif()
-else()
-    set(T8CODE_FOUND OFF)
+find_package( T8CODE CONFIG )
+if ( NOT T8CODE_FOUND )
+    message( NOTICE "t8code not found: t8code examples will NOT be built")
 endif()
 
 # Find MPI

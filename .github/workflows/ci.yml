@@ -118,7 +118,7 @@ jobs:
           mkdir build
           cd build
           cmake .. -DCMAKE_INSTALL_PREFIX=../install \
-                   -DCMAKE_BUILD_TYPE=Release -DLIBTRIXI_WITH_T8CODE=ON \
+                   -DCMAKE_BUILD_TYPE=Release \
                    -DT8CODE_ROOT=$PWD/../t8code-local/prefix \
                    -DLIBTRIXI_ENABLE_WARNINGS=ON -DLIBTRIXI_ENABLE_WERROR=ON \
                    -DLIBTRIXI_ENABLE_TESTING=ON -DJULIA_PROJECT_PATH=../libtrixi-julia
@@ -129,7 +129,7 @@ jobs:
           mkdir build
           cd build
           cmake .. -DCMAKE_INSTALL_PREFIX=../install \
-                   -DCMAKE_BUILD_TYPE=Debug -DLIBTRIXI_WITH_T8CODE=ON \
+                   -DCMAKE_BUILD_TYPE=Debug \
                    -DT8CODE_ROOT=$PWD/../t8code-local/prefix \
                    -DCMAKE_C_FLAGS="-cpp --coverage -O0" \
                    -DCMAKE_Fortran_FLAGS="-cpp --coverage -O0" \
